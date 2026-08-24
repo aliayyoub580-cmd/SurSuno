@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="description" content="SurSuno — Your personal music streaming platform. Discover, play, and save your favorite South Asian music." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="SurSuno" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="SurSuno — Music for Every Mood" />
+    <meta property="og:description" content="Discover songs you'll love, from the artists and languages you listen to most." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://sursuno.app" />
+    <meta property="og:image" content="/og-image.png" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SurSuno — Music for Every Mood" />
+    <meta name="twitter:description" content="Discover songs you'll love, from the artists and languages you listen to most." />
+
+    <title>SurSuno — Music for Every Mood</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <script>
+      // Hydrate theme from localStorage before render
+      const theme = localStorage.getItem('sursuno-theme');
+      if (theme) document.documentElement.setAttribute('data-theme', theme);
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
