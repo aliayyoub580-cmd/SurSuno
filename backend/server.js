@@ -11,6 +11,14 @@ const PORT = process.env.PORT || 5100;
 app.use(cors());
 app.use(express.json());
 
+// Handle /api prefix stripping for Vercel Services rewrites
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api')) {
+    req.url = req.url.replace(/^\/api/, '') || '/';
+  }
+  next();
+});
+
 // Documentation Redirect
 app.get('/', (req, res) => {
   res.redirect('https://cyberboysumanjay.github.io/JioSaavnAPI/');
@@ -173,3 +181,6 @@ app.get('/result/', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`SurSuno Node.js Express server running at http://localhost:${PORT}`);
 });
+
+export default app;
+
