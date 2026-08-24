@@ -1,12 +1,14 @@
 import { motion } from 'motion/react';
-import { SearchBar } from '@/components/SearchBar';
-import { usePlayerStore } from '@/stores/playerStore';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { searchSongs } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { SongCardSkeleton } from '@/components/Skeleton';
+import { usePlayerStore } from '@/stores/playerStore';
+import { FAMOUS_ARTISTS } from '@/data/artistsData';
 
 export function DiscoverPage() {
+  const navigate = useNavigate();
   const { currentTrack, isPlaying } = usePlayerStore();
   const [mood, setMood] = useState<string | null>(null);
   const [moodSongs, setMoodSongs] = useState<any[]>([]);
@@ -19,6 +21,17 @@ export function DiscoverPage() {
     { id: 'workout', label: 'Workout', emoji: '💪', gradient: 'from-red-400 to-orange-500' },
     { id: 'focus', label: 'Focus', emoji: '🧠', gradient: 'from-purple-400 to-indigo-500' },
     { id: 'party', label: 'Party', emoji: '🎉', gradient: 'from-pink-500 to-violet-500' },
+  ];
+
+  const popularArtists = FAMOUS_ARTISTS.slice(0, 6);
+
+  const newReleases = [
+    { name: 'Animal', img: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=500&q=80' },
+    { name: 'Pathaan', img: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=500&q=80' },
+    { name: 'Gangubai Kathiawadi', img: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=500&q=80' },
+    { name: 'Rocky Aur Rani', img: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?auto=format&fit=crop&w=500&q=80' },
+    { name: 'Jawan', img: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=500&q=80' },
+    { name: 'Dunki', img: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?auto=format&fit=crop&w=500&q=80' },
   ];
 
   const handleMoodClick = async (moodId: string) => {
@@ -43,43 +56,41 @@ export function DiscoverPage() {
 
   const handlePlay = (song: any) => {
     const { setTrack, setQueue, togglePlay } = usePlayerStore.getState();
-    const list = moodSongs.length > 0 ? moodSongs : [];
-    if (list.length > 0) {
-      setQueue(list);
-      const idx = list.findIndex((s: any) => s.id === song.id);
-      setTrack(list[Math.max(0, idx)]);
-    } else {
-      setTrack(song);
-    }
+    const list = moodSongs.length > 0 ? moodSongs : [song];
+    setQueue(list, list.findIndex((s) => s.id === song.id));
+    setTrack(song);
     togglePlay();
   };
 
   return (
-    <div className="pb-24 md:pb-8">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+    <div className="pb-24 md:pb-8 space-y-8">
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-2xl md:text-3xl font-bold text-text">Discover</h1>
-        <p className="text-text-muted mt-1">Find music for every mood</p>
+        <p className="text-text-muted mt-1 text-sm">Find music for every mood and explore popular artists</p>
       </motion.div>
 
-      {/* Mood selector */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-8">
-        {moods.map((m, i) => (
-          <motion.button
-            key={m.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => handleMoodClick(m.id)}
-            className={`flex flex-col items-center gap-2 p-4 rounded-2xl bg-surface border transition-all ${
-              mood === m.id ? 'border-accent shadow-lg shadow-accent/20' : 'border-border hover:border-accent/30'
-            }`}
-          >
-            <span className="text-2xl">{m.emoji}</span>
-            <span className="text-xs font-medium text-text">{m.label}</span>
-          </motion.button>
-        ))}
+      {/* Mood Selector */}
+      <div>
+        <h2 className="text-lg font-bold text-text mb-3">Browse By Mood</h2>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          {moods.map((m, i) => (
+            <motion.button
+              key={m.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleMoodClick(m.id)}
+              className={`flex flex-col items-center gap-2 p-4 rounded-2xl bg-surface border transition-all ${
+                mood === m.id ? 'border-accent shadow-lg shadow-accent/20' : 'border-border hover:border-accent/30'
+              }`}
+            >
+              <span className="text-2xl">{m.emoji}</span>
+              <span className="text-xs font-medium text-text">{m.label}</span>
+            </motion.button>
+          ))}
+        </div>
       </div>
 
       {mood && (
@@ -100,68 +111,74 @@ export function DiscoverPage() {
               ))}
             </div>
           ) : (
-            <EmptyState icon="🎵" title="No songs found" subtitle={`Try a different mood for ${moods.find(m => m.id === mood)?.label}`} />
+            <div className="text-center py-12 text-text-muted text-sm">No songs found for this mood.</div>
           )}
         </div>
       )}
 
-      {/* Quick picks */}
+      {/* 6 Popular Artists Section with "View All" */}
       {!mood && (
-        <>
-          <QuickSection
-            title="Popular Artists"
-            items={[
-              { name: 'Arijit Singh', img: 'https://c.saavncdn.com/050/Arijit-Singh-English-2022-20221026165913-500x500.jpg' },
-              { name: 'Atif Aslam', img: 'https://c.saavncdn.com/037/Atif-Aslam-Hindi-2019-20191205155310-500x500.jpg' },
-              { name: 'Neha Kakkar', img: 'https://c.saavncdn.com/066/Neha-Kakkar-Hindi-2021-20210817141813-500x500.jpg' },
-              { name: 'Diljit Dosanjh', img: 'https://c.saavncdn.com/064/Diljit-Dosanjh-Punjabi-2023-20230517180851-500x500.jpg' },
-            ]}
-          />
-          <QuickSection
-            title="New Releases"
-            items={[
-              { name: 'Animal', img: 'https://c.saavncdn.com/064/Animal-Soundtrack-Hindi-2023-20231227162536-500x500.jpg' },
-              { name: 'Pathaan', img: 'https://c.saavncdn.com/066/Pathaan-Hindi-2023-20230125174241-500x500.jpg' },
-              { name: 'Gangubai', img: 'https://c.saavncdn.com/049/Gangubai-Kathiawadi-Soundtrack-Hindi-2022-202200309221818-500x500.jpg' },
-              { name: 'Rocky Aur Rani', img: 'https://c.saavncdn.com/046/Rocky-Aur-Rani-Ki-Kahani-Hindi-2023-20230725165223-500x500.jpg' },
-            ]}
-          />
-        </>
-      )}
-    </div>
-  );
-}
-
-function QuickSection({ title, items }: { title: string; items: { name: string; img: string }[] }) {
-  return (
-    <section className="mb-8">
-      <h2 className="text-xl font-bold text-text mb-4">{title}</h2>
-      <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
-        {items.map((item, i) => (
-          <motion.div
-            key={item.name}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className="flex-shrink-0 w-36 cursor-pointer group"
-          >
-            <div className="relative aspect-square rounded-xl overflow-hidden mb-2">
-              <img src={item.img} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-text">Popular Artists</h2>
+              <p className="text-xs text-text-muted">Top music icons across Hindi, Punjabi & Pakistani music</p>
             </div>
-            <p className="text-sm font-medium text-text truncate">{item.name}</p>
-          </motion.div>
-        ))}
-      </div>
-    </section>
-  );
-}
+            <button
+              onClick={() => navigate('/artists')}
+              className="px-4 py-1.5 rounded-full text-xs font-bold bg-accent/10 text-accent hover:bg-accent hover:text-white transition-all"
+            >
+              View All (50+) →
+            </button>
+          </div>
 
-function EmptyState({ icon, title, subtitle }: { icon: string; title: string; subtitle: string }) {
-  return (
-    <div className="text-center py-12">
-      <div className="text-4xl mb-3">{icon}</div>
-      <h3 className="font-semibold text-text">{title}</h3>
-      <p className="text-text-muted text-sm mt-1">{subtitle}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            {popularArtists.map((artist, i) => (
+              <motion.div
+                key={artist.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                whileHover={{ y: -4 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/artists')}
+                className="flex flex-col items-center p-4 rounded-2xl bg-surface border border-border hover:border-accent/40 transition-all cursor-pointer group text-center"
+              >
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden mb-3 shadow-md bg-surface-2">
+                  <img src={artist.image} alt={artist.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                </div>
+                <p className="text-xs font-bold text-text group-hover:text-accent transition-colors truncate w-full">{artist.name}</p>
+                <p className="text-[0.65rem] text-text-muted truncate w-full mt-0.5">{artist.genre}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* New Releases */}
+      {!mood && (
+        <section className="space-y-4">
+          <h2 className="text-xl font-bold text-text">New Releases</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            {newReleases.map((item, i) => (
+              <motion.div
+                key={item.name}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                whileHover={{ y: -4 }}
+                onClick={() => navigate(`/search?q=${encodeURIComponent(item.name)}`)}
+                className="flex flex-col p-3 rounded-2xl bg-surface border border-border hover:border-accent/40 transition-all cursor-pointer group"
+              >
+                <div className="relative aspect-square rounded-xl overflow-hidden mb-2 bg-surface-2">
+                  <img src={item.img} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                </div>
+                <p className="text-xs font-bold text-text truncate">{item.name}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

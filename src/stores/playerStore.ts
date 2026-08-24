@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { PlayerTrack, Song } from '@/types';
 import { getRelatedSongs, getPersonalizedRecommendations } from '@/services/recommendationService';
+import { useUserStore } from '@/stores/userStore';
 
 export type QueueSource =
   | 'search'
@@ -69,6 +70,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   showMiniPlayer: false,
 
   setTrack: (track, source = 'search') => {
+    if (track) {
+      useUserStore.getState().addToRecentlyPlayed(track);
+    }
     const history = get().sessionQueueHistory;
     const newHistory = track?.id ? [track.id, ...history.filter((id) => id !== track.id)].slice(0, 50) : history;
 
@@ -159,6 +163,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   setQueue: (tracks, startIndex = 0, source = 'search') => {
     const current = tracks[startIndex] ?? null;
+    if (current) {
+      useUserStore.getState().addToRecentlyPlayed(current);
+    }
     const history = get().sessionQueueHistory;
     const newHistory = current?.id ? [current.id, ...history.filter((id) => id !== current.id)].slice(0, 50) : history;
 
