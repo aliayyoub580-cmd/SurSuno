@@ -205,9 +205,11 @@ app.all(['/news/update', '/news/update/'], async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`SurSuno Node.js Express server running at http://localhost:${PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`SurSuno Node.js Express server running at http://localhost:${PORT}`);
+  });
+}
 
 export default app;
 
