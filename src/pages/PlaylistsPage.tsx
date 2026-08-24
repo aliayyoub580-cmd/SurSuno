@@ -57,8 +57,7 @@ export function PlaylistsPage() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-accent/30 via-purple-600/20 to-pink-500/20 p-6 md:p-8 border border-white/10 shadow-2xl backdrop-blur-2xl"
-        style={{ boxShadow: '0 10px 40px rgba(0,0,0,0.3), 0 0 25px rgba(var(--accent-rgb, 120,80,255), 0.12)' }}
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-accent/20 via-purple-600/15 to-pink-500/15 p-6 md:p-8 border border-border/80 shadow-sm backdrop-blur-xl"
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2">
@@ -74,7 +73,7 @@ export function PlaylistsPage() {
 
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-6 py-3 rounded-full bg-accent text-white font-bold text-xs shadow-lg shadow-accent/30 hover:bg-accent/90 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 self-start md:self-auto"
+            className="px-6 py-3 rounded-full bg-accent text-white font-extrabold text-xs shadow-sm hover:opacity-90 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 self-start md:self-auto"
           >
             <PlusIcon size={18} />
             <span>Create New Playlist</span>
@@ -254,10 +253,10 @@ export function PlaylistsPage() {
           <motion.div
             whileHover={{ y: -4, scale: 1.01 }}
             onClick={() => setActiveTab('favorites')}
-            className="p-5 rounded-3xl bg-gradient-to-br from-pink-500/20 via-purple-500/10 to-surface border border-pink-500/30 hover:border-pink-500/60 transition-all cursor-pointer group shadow-lg flex flex-col justify-between"
+            className="p-5 rounded-3xl bg-gradient-to-br from-pink-500/20 via-purple-500/10 to-surface border border-pink-500/30 hover:border-pink-500/60 transition-all cursor-pointer group shadow-sm hover:shadow-md flex flex-col justify-between"
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-pink-500 text-white flex items-center justify-center shadow-md">
+              <div className="w-12 h-12 rounded-2xl bg-pink-500 text-white flex items-center justify-center shadow-sm">
                 <HeartIcon size={24} filled />
               </div>
               <span className="text-[0.65rem] font-bold uppercase tracking-wider bg-pink-500/20 text-pink-300 px-3 py-1 rounded-full">
@@ -278,7 +277,7 @@ export function PlaylistsPage() {
               key={pl.id}
               whileHover={{ y: -4, scale: 1.01 }}
               onClick={() => { setActiveTab(pl.id); setSelectedPlaylist(pl); }}
-              className="p-5 rounded-3xl bg-surface border border-border hover:border-accent/50 transition-all cursor-pointer group shadow-lg flex flex-col justify-between"
+              className="p-5 rounded-3xl bg-surface border border-border hover:border-accent/50 transition-all cursor-pointer group shadow-sm hover:shadow-md flex flex-col justify-between"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent to-purple-600 text-white font-black text-lg flex items-center justify-center shadow-md">
