@@ -20,14 +20,13 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
   };
 
   return (
-    <div className="pb-24 md:pb-8 space-y-10">
+    <div className="space-y-10">
       <Hero onSearch={(q) => onNavigate(`/search?q=${encodeURIComponent(q)}`)} />
 
       {/* Trending Now (2 complete rows = 12 songs) */}
       <SongList
         songs={trendingSongs.slice(0, 12)}
         title="Trending Now"
-        subtitle="Top 12 hottest tracks (2 rows of 6)"
         onPlayAll={handlePlayAll}
         loading={trendingLoading}
       />

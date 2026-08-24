@@ -113,7 +113,7 @@ export function LanguagePage() {
   };
 
   return (
-    <div className="pb-24 md:pb-8 space-y-6">
+    <div className="space-y-6">
       {/* Header Banner */}
       <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${meta.gradient} p-6 md:p-8 text-white shadow-xl`}>
         <div className="flex items-center justify-between mb-4">

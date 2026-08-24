@@ -42,7 +42,7 @@ export function ArtistsPage() {
   };
 
   return (
-    <div className="pb-24 md:pb-8 space-y-6">
+    <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-text">Popular Artists</h1>

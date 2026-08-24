@@ -88,7 +88,7 @@ export function TrendingPage() {
   const displayedSongs = isFullFeed ? songs : previewSongs;
 
   return (
-    <div className="pb-24 md:pb-8 space-y-8">
+    <div className="space-y-8">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-2xl md:text-3xl font-bold text-text">Trending Hits</h1>
         <p className="text-text-muted text-sm mt-1">The hottest music tracks trending across South Asia and globally</p>
@@ -128,9 +128,11 @@ export function TrendingPage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-text">Today's Top Hits</h2>
-          <span className="text-xs text-text-muted font-medium">
-            {isFullFeed ? `Showing ${songs.length} continuous songs` : '2 Complete Rows'}
-          </span>
+          {isFullFeed && (
+            <span className="text-xs text-text-muted font-medium">
+              Showing {songs.length} continuous songs
+            </span>
+          )}
         </div>
 
         {initialLoading ? (

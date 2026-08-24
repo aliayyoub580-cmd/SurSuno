@@ -34,7 +34,7 @@ export function ProfilePage() {
     .map(([name]) => name);
 
   return (
-    <div className="pb-24 md:pb-8">
+    <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <div className="flex items-center gap-4 mb-6">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-accent to-pink-500 flex items-center justify-center text-white text-2xl font-bold">

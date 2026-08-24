@@ -3,7 +3,7 @@ import { DownloadIcon, PlayIcon } from '@/components/Icons';
 
 export function DownloadPage() {
   return (
-    <div className="pb-24 md:pb-8">
+    <div className="space-y-6">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}

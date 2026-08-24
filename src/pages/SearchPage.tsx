@@ -36,7 +36,7 @@ export function SearchPage() {
   };
 
   return (
-    <div className="pb-24 md:pb-8">
+    <div className="space-y-6">
       <div className="sticky top-16 z-30 bg-bg/80 backdrop-blur-xl -mx-4 px-4 py-3 md:-mx-0 md:px-0 md:static md:bg-transparent md:backdrop-blur-none md:py-0 md:mb-6">
         <SearchBar
           value={query}

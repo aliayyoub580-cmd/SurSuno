@@ -29,7 +29,7 @@ function RouterContent() {
       <Header />
       <div className="flex flex-1 max-w-screen-2xl mx-auto w-full">
         <Sidebar />
-        <main className="flex-1 px-4 md:px-6 py-6 overflow-x-hidden" style={{ paddingBottom: '6rem' }}>
+        <main className="flex-1 px-4 md:px-6 pt-6 pb-[2rem] overflow-x-hidden">
           <Routes>
             <Route path="/" element={<HomePage onNavigate={navigate} />} />
             <Route path="/search" element={<SearchPage />} />

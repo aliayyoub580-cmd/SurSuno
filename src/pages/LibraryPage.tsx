@@ -20,7 +20,7 @@ export function LibraryPage() {
   };
 
   return (
-    <div className="pb-24 md:pb-8">
+    <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-text">Library</h1>
       </motion.div>
