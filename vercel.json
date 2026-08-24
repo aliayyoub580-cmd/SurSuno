@@ -36,6 +36,10 @@
     {
       "source": "/api",
       "destination": "/api/index.js"
+    },
+    {
+      "source": "/((?!api|assets|favicon.svg|manifest.json|icon-.*|sw.js).*)",
+      "destination": "/index.html"
     }
   ]
 }
