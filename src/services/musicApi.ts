@@ -198,13 +198,29 @@ export async function universalSearch(query: string): Promise<any> {
   }
 }
 
+const TRENDING_QUERIES = [
+  'top hindi songs 2025',
+  'bollywood trending hits',
+  'punjabi top songs 2025',
+  'coke studio top hits',
+  'arijit singh latest hits',
+  'diljit dosanjh top hits',
+  'trending reels music hindi',
+  'viral hits hindi punjabi',
+  'lofi hindi top songs',
+];
+
 // --- Trending / Recommended ---
 export async function getTrendingSongs(): Promise<Song[]> {
   try {
-    const songs = await searchSongs('trending');
-    if (songs.length > 0) return songs;
+    const randomQuery = TRENDING_QUERIES[Math.floor(Math.random() * TRENDING_QUERIES.length)];
+    const songs = await searchSongs(randomQuery);
+    if (songs.length > 0) {
+      // Shuffle songs on every reload to show fresh selection
+      return [...songs].sort(() => Math.random() - 0.5);
+    }
     const fallback = await searchSongs('arijit singh');
-    if (fallback.length > 0) return fallback;
+    if (fallback.length > 0) return fallback.sort(() => Math.random() - 0.5);
   } catch (err) {
     console.error('Failed to load trending songs:', err);
   }
