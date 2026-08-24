@@ -213,14 +213,32 @@ const TRENDING_QUERIES = [
 // --- Trending / Recommended ---
 export async function getTrendingSongs(): Promise<Song[]> {
   try {
-    const randomQuery = TRENDING_QUERIES[Math.floor(Math.random() * TRENDING_QUERIES.length)];
-    const songs = await searchSongs(randomQuery);
-    if (songs.length > 0) {
-      // Shuffle songs on every reload to show fresh selection
-      return [...songs].sort(() => Math.random() - 0.5);
+    const q1 = TRENDING_QUERIES[Math.floor(Math.random() * TRENDING_QUERIES.length)];
+    const q2 = TRENDING_QUERIES[(Math.floor(Math.random() * TRENDING_QUERIES.length) + 1) % TRENDING_QUERIES.length];
+    const q3 = TRENDING_QUERIES[(Math.floor(Math.random() * TRENDING_QUERIES.length) + 2) % TRENDING_QUERIES.length];
+
+    const [res1, res2, res3] = await Promise.all([
+      searchSongs(q1).catch(() => []),
+      searchSongs(q2).catch(() => []),
+      searchSongs(q3).catch(() => []),
+    ]);
+
+    const combined = [...res1, ...res2, ...res3];
+    const seenIds = new Set<string>();
+    const uniqueSongs: Song[] = [];
+
+    for (const song of combined) {
+      if (song && song.id && !seenIds.has(song.id)) {
+        seenIds.add(song.id);
+        uniqueSongs.push(song);
+      }
     }
-    const fallback = await searchSongs('arijit singh');
-    if (fallback.length > 0) return fallback.sort(() => Math.random() - 0.5);
+
+    if (uniqueSongs.length >= 6) {
+      // Return exactly 12 songs (2 complete 6-card rows) shuffled randomly
+      const shuffled = uniqueSongs.sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, 12);
+    }
   } catch (err) {
     console.error('Failed to load trending songs:', err);
   }
