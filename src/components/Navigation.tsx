@@ -1,13 +1,14 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  HomeIcon, DiscoverIcon, TrendingIcon, LibraryIcon, UserIcon,
+  HomeIcon, DiscoverIcon, TrendingIcon, NewsIcon, LibraryIcon, UserIcon,
 } from '@/components/Icons';
 
 const navItems = [
   { label: 'Home', path: '/', icon: HomeIcon },
   { label: 'Discover', path: '/discover', icon: DiscoverIcon },
   { label: 'Trending', path: '/trending', icon: TrendingIcon },
+  { label: 'News', path: '/news', icon: NewsIcon },
   { label: 'Library', path: '/library', icon: LibraryIcon },
   { label: 'Profile', path: '/profile', icon: UserIcon },
 ];

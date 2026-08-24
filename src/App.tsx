@@ -7,6 +7,7 @@ import { HomePage } from './pages/HomePage';
 import { SearchPage } from './pages/SearchPage';
 import { DiscoverPage } from './pages/DiscoverPage';
 import { TrendingPage } from './pages/TrendingPage';
+import { NewsPage } from './pages/NewsPage';
 import { GenresPage } from './pages/GenresPage';
 import { LibraryPage } from './pages/LibraryPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -32,6 +33,7 @@ function RouterContent() {
             <Route path="/search" element={<SearchPage />} />
             <Route path="/discover" element={<DiscoverPage />} />
             <Route path="/trending" element={<TrendingPage />} />
+            <Route path="/news" element={<NewsPage />} />
             <Route path="/genres" element={<GenresPage />} />
             <Route path="/library" element={<LibraryPage />} />
             <Route path="/profile" element={<ProfilePage />} />

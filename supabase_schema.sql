@@ -83,6 +83,19 @@ CREATE TABLE IF NOT EXISTS public.listening_history (
     played_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- 7. DAILY NEWS TABLE
+CREATE TABLE IF NOT EXISTS public.news (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    description TEXT,
+    image_url TEXT,
+    source_name TEXT,
+    article_url TEXT UNIQUE NOT NULL,
+    published_at TIMESTAMPTZ DEFAULT now(),
+    category TEXT DEFAULT 'Music & Entertainment',
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- ==========================================
 -- INDEXES FOR FAST QUERY PERFORMANCE
 -- ==========================================
@@ -93,6 +106,8 @@ CREATE INDEX IF NOT EXISTS idx_user_events_user_id ON public.user_music_events(u
 CREATE INDEX IF NOT EXISTS idx_user_events_created_at ON public.user_music_events(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_listening_history_user_id ON public.listening_history(user_id);
 CREATE INDEX IF NOT EXISTS idx_listening_history_played_at ON public.listening_history(played_at DESC);
+CREATE INDEX IF NOT EXISTS idx_news_published_at ON public.news(published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_news_article_url ON public.news(article_url);
 
 -- ==========================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
@@ -177,6 +192,13 @@ CREATE POLICY "Users can view own listening history"
 
 CREATE POLICY "Users can add to own listening history" 
     ON public.listening_history FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- 7. News Policies (Public read, Service Role write)
+ALTER TABLE public.news ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public news viewable by everyone" 
+    ON public.news FOR SELECT USING (true);
+
 
 -- ==========================================
 -- AUTOMATIC PROFILE CREATION TRIGGER

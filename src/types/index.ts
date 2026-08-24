@@ -54,4 +54,16 @@ export type Playlist = {
   description?: string;
 };
 
+export type NewsArticle = {
+  id?: string;
+  title: string;
+  description: string;
+  image_url: string;
+  source_name: string;
+  article_url: string;
+  published_at: string;
+  category: string;
+  created_at?: string;
+};
+
 export type PlayerTrack = Song;

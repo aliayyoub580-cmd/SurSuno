@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import * as jiosaavn from './jiosaavn.js';
+import { fetchRssNews, fetchAndSyncNews } from './newsWorker.js';
 
 dotenv.config();
 
@@ -173,6 +174,32 @@ app.get('/result/', async (req, res) => {
 
     const fallback = await jiosaavn.searchForSong(query, lyrics, true);
     res.json(fallback);
+  } catch (err) {
+    res.status(500).json({ status: false, error: err.message });
+  }
+});
+
+// Daily News Endpoints
+app.get(['/news', '/news/'], async (req, res) => {
+  try {
+    const articles = await fetchRssNews();
+    res.json({ status: true, count: articles.length, data: articles });
+  } catch (err) {
+    res.status(500).json({ status: false, error: err.message });
+  }
+});
+
+app.all(['/news/update', '/news/update/'], async (req, res) => {
+  const cronSecret = process.env.CRON_SECRET;
+  const providedSecret = req.headers['x-cron-secret'] || req.query.secret;
+
+  if (cronSecret && providedSecret !== cronSecret) {
+    return res.status(401).json({ status: false, error: 'Unauthorized cron trigger' });
+  }
+
+  try {
+    const result = await fetchAndSyncNews();
+    res.json(result);
   } catch (err) {
     res.status(500).json({ status: false, error: err.message });
   }
