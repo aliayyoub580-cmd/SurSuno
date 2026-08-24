@@ -2,7 +2,8 @@ import { motion } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useUserStore } from '@/stores/userStore';
-import { PauseIcon, PlayIcon, SkipNextIcon, SkipPrevIcon, HeartIcon, VolumeIcon } from './Icons';
+import { PauseIcon, PlayIcon, SkipNextIcon, SkipPrevIcon, HeartIcon, VolumeIcon, PlusIcon } from './Icons';
+import { AddToPlaylistModal } from './AddToPlaylistModal';
 
 interface MiniPlayerProps {
   onOpen: () => void;
@@ -10,7 +11,8 @@ interface MiniPlayerProps {
 
 export function MiniPlayer({ onOpen }: MiniPlayerProps) {
   const { currentTrack, isPlaying, togglePlay, next, prev, seek, volume, isMuted, toggleMute, progress, duration, isLoadingMoreRecommendations } = usePlayerStore();
-  const { isFavorite, addFavorite } = useUserStore();
+  const { isFavorite } = useUserStore();
+  const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
 
   if (!currentTrack) return null;
 
@@ -96,13 +98,26 @@ export function MiniPlayer({ onOpen }: MiniPlayerProps) {
 
         {/* Right controls - desktop */}
         <div className="hidden md:flex items-center gap-3 flex-1 justify-end">
+          {/* Option 1: Heart (Favorites) */}
           <button
-            onClick={() => isFav ? useUserStore.getState().removeFavorite(currentTrack.id) : addFavorite(currentTrack.id)}
+            onClick={() => useUserStore.getState().toggleFavorite(currentTrack)}
             className={`p-2 rounded-full transition-colors ${isFav ? 'text-accent' : 'text-text-muted hover:text-text'}`}
             aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
+            title={isFav ? 'In Favorites' : 'Add to Favorites'}
           >
             <HeartIcon size={18} filled={isFav} />
           </button>
+
+          {/* Option 2: Plus (Add to Playlist) */}
+          <button
+            onClick={() => setIsPlaylistModalOpen(true)}
+            className="p-2 rounded-full text-text-muted hover:text-accent hover:bg-accent/10 transition-all"
+            aria-label="Add to playlist"
+            title="Add to Playlist"
+          >
+            <PlusIcon size={18} />
+          </button>
+
           <div className="flex items-center gap-2">
             <button onClick={toggleMute} className="p-1 text-text-muted hover:text-text" aria-label={isMuted ? 'Unmute' : 'Mute'}>
               <VolumeIcon size={18} muted={isMuted} />
@@ -127,6 +142,13 @@ export function MiniPlayer({ onOpen }: MiniPlayerProps) {
           </span>
         </div>
       </div>
+
+      {/* Add To Playlist Modal */}
+      <AddToPlaylistModal
+        isOpen={isPlaylistModalOpen}
+        onClose={() => setIsPlaylistModalOpen(false)}
+        song={currentTrack}
+      />
     </motion.div>
   );
 }

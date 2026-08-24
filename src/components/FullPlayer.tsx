@@ -4,8 +4,9 @@ import { usePlayerStore } from '@/stores/playerStore';
 import { useUserStore } from '@/stores/userStore';
 import {
   PauseIcon, PlayIcon, SkipNextIcon, SkipPrevIcon,
-  HeartIcon, VolumeIcon, ShuffleIcon, RepeatIcon, QueueIcon, CloseIcon,
+  HeartIcon, VolumeIcon, ShuffleIcon, RepeatIcon, QueueIcon, CloseIcon, PlusIcon,
 } from './Icons';
+import { AddToPlaylistModal } from './AddToPlaylistModal';
 
 interface FullPlayerProps {
   onClose: () => void;
@@ -13,7 +14,8 @@ interface FullPlayerProps {
 
 export function FullPlayer({ onClose }: FullPlayerProps) {
   const { currentTrack, isPlaying, togglePlay, next, prev, seek, volume, isMuted, toggleMute, shuffle, toggleShuffle, repeat, toggleRepeat, progress, duration } = usePlayerStore();
-  const { isFavorite, addFavorite, removeFavorite } = useUserStore();
+  const { isFavorite, toggleFavorite } = useUserStore();
+  const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
 
   if (!currentTrack) return null;
 
@@ -135,17 +137,24 @@ export function FullPlayer({ onClose }: FullPlayerProps) {
         {/* Bottom actions */}
         <div className="flex items-center justify-between px-2 pb-4">
           <div className="flex items-center gap-1">
+            {/* Option 1: Heart */}
             <button
-              onClick={() => isFav ? removeFavorite(currentTrack.id) : addFavorite(currentTrack.id)}
+              onClick={() => toggleFavorite(currentTrack)}
               className={`p-3 rounded-full transition-colors ${isFav ? 'text-accent' : 'text-text-muted hover:text-text'}`}
               aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
+              title={isFav ? 'In Favorites' : 'Add to Favorites'}
             >
               <HeartIcon size={22} filled={isFav} />
             </button>
-            <button className="p-3 text-text-muted hover:text-text transition-colors rounded-full" aria-label="Download">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
-              </svg>
+
+            {/* Option 2: Plus */}
+            <button
+              onClick={() => setIsPlaylistModalOpen(true)}
+              className="p-3 rounded-full text-text-muted hover:text-accent hover:bg-accent/10 transition-colors"
+              aria-label="Add to playlist"
+              title="Add to Playlist"
+            >
+              <PlusIcon size={22} />
             </button>
           </div>
           <div className="flex items-center gap-2">
@@ -169,6 +178,13 @@ export function FullPlayer({ onClose }: FullPlayerProps) {
           </div>
         </div>
       </div>
+
+      {/* Add To Playlist Modal */}
+      <AddToPlaylistModal
+        isOpen={isPlaylistModalOpen}
+        onClose={() => setIsPlaylistModalOpen(false)}
+        song={currentTrack}
+      />
     </motion.div>
   );
 }

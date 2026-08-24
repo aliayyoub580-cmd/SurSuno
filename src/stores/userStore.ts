@@ -10,12 +10,14 @@ export interface UserPreferences {
 
 interface UserState {
   favorites: string[];
+  favoriteSongs: Song[];
   recentlyPlayed: Song[];
   searchHistory: string[];
   userPreferences: UserPreferences;
   skippedTrackIds: string[];
 
-  addFavorite: (songId: string) => void;
+  toggleFavorite: (song: Song) => void;
+  addFavorite: (song: Song | string) => void;
   removeFavorite: (songId: string) => void;
   isFavorite: (songId: string) => boolean;
   addToRecentlyPlayed: (song: Song) => void;
@@ -30,6 +32,7 @@ export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
       favorites: [],
+      favoriteSongs: [],
       recentlyPlayed: [],
       searchHistory: [],
       userPreferences: {
@@ -39,14 +42,40 @@ export const useUserStore = create<UserState>()(
       },
       skippedTrackIds: [],
 
-      addFavorite: (songId) =>
-        set((s) => ({
-          favorites: s.favorites.includes(songId) ? s.favorites : [...s.favorites, songId],
-        })),
+      toggleFavorite: (song) => {
+        const { favorites, favoriteSongs } = get();
+        if (favorites.includes(song.id)) {
+          set({
+            favorites: favorites.filter((id) => id !== song.id),
+            favoriteSongs: favoriteSongs.filter((s) => s.id !== song.id),
+          });
+        } else {
+          set({
+            favorites: [song.id, ...favorites],
+            favoriteSongs: [song, ...favoriteSongs.filter((s) => s.id !== song.id)],
+          });
+        }
+      },
+
+      addFavorite: (songOrId) => {
+        if (typeof songOrId === 'string') {
+          const songId = songOrId;
+          set((s) => ({
+            favorites: s.favorites.includes(songId) ? s.favorites : [songId, ...s.favorites],
+          }));
+        } else {
+          const song = songOrId;
+          set((s) => ({
+            favorites: s.favorites.includes(song.id) ? s.favorites : [song.id, ...s.favorites],
+            favoriteSongs: s.favoriteSongs.some((f) => f.id === song.id) ? s.favoriteSongs : [song, ...s.favoriteSongs],
+          }));
+        }
+      },
 
       removeFavorite: (songId) =>
         set((s) => ({
           favorites: s.favorites.filter((id) => id !== songId),
+          favoriteSongs: s.favoriteSongs.filter((sng) => sng.id !== songId),
         })),
 
       isFavorite: (songId) => get().favorites.includes(songId),

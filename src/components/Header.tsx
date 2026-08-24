@@ -14,7 +14,7 @@ export function Header() {
     { label: 'Discover', path: '/discover' },
     { label: 'Trending', path: '/trending' },
     { label: 'Genres', path: '/genres' },
-    { label: 'Library', path: '/library' },
+    { label: 'Playlists', path: '/playlists' },
   ];
 
   return (

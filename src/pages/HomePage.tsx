@@ -40,7 +40,7 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
           </div>
           {recentlyPlayed.length > 0 && (
             <button
-              onClick={() => onNavigate('/library')}
+              onClick={() => onNavigate('/playlists')}
               className="text-xs font-bold text-accent hover:underline"
             >
               View Full History →

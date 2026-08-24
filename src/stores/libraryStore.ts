@@ -1,62 +1,71 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { Song } from '@/types';
 
-interface LibraryState {
-  playlists: {
-    id: string;
-    name: string;
-    coverImage?: string;
-    songIds: string[];
-    createdAt: number;
-  }[];
-  createPlaylist: (name: string, coverImage?: string) => void;
-  deletePlaylist: (id: string) => void;
-  renamePlaylist: (id: string, name: string) => void;
-  addSongToPlaylist: (playlistId: string, songId: string) => void;
-  removeSongFromPlaylist: (playlistId: string, songId: string) => void;
-  reorderPlaylist: (playlistId: string, songIds: string[]) => void;
+export interface Playlist {
+  id: string;
+  name: string;
+  description?: string;
+  coverImage?: string;
+  songs: Song[];
+  createdAt: number;
 }
 
-export const useLibraryStore = create<LibraryState>((set) => ({
-  playlists: [],
+interface LibraryState {
+  playlists: Playlist[];
+  createPlaylist: (name: string, description?: string, coverImage?: string) => Playlist;
+  deletePlaylist: (id: string) => void;
+  renamePlaylist: (id: string, name: string) => void;
+  addSongToPlaylist: (playlistId: string, song: Song) => void;
+  removeSongFromPlaylist: (playlistId: string, songId: string) => void;
+}
 
-  createPlaylist: (name, coverImage) =>
-    set((s) => ({
-      playlists: [
-        ...s.playlists,
-        { id: `pl_${Date.now()}`, name, coverImage, songIds: [], createdAt: Date.now() },
-      ],
-    })),
+export const useLibraryStore = create<LibraryState>()(
+  persist(
+    (set, get) => ({
+      playlists: [],
 
-  deletePlaylist: (id) =>
-    set((s) => ({
-      playlists: s.playlists.filter((p) => p.id !== id),
-    })),
+      createPlaylist: (name, description = '', coverImage = '') => {
+        const newPl: Playlist = {
+          id: `pl_${Date.now()}`,
+          name: name.trim(),
+          description: description.trim(),
+          coverImage,
+          songs: [],
+          createdAt: Date.now(),
+        };
+        set((s) => ({ playlists: [newPl, ...s.playlists] }));
+        return newPl;
+      },
 
-  renamePlaylist: (id, name) =>
-    set((s) => ({
-      playlists: s.playlists.map((p) => (p.id === id ? { ...p, name } : p)),
-    })),
+      deletePlaylist: (id) =>
+        set((s) => ({ playlists: s.playlists.filter((p) => p.id !== id) })),
 
-  addSongToPlaylist: (playlistId, songId) =>
-    set((s) => ({
-      playlists: s.playlists.map((p) =>
-        p.id === playlistId && !p.songIds.includes(songId)
-          ? { ...p, songIds: [...p.songIds, songId] }
-          : p
-      ),
-    })),
+      renamePlaylist: (id, name) =>
+        set((s) => ({
+          playlists: s.playlists.map((p) => (p.id === id ? { ...p, name } : p)),
+        })),
 
-  removeSongFromPlaylist: (playlistId, songId) =>
-    set((s) => ({
-      playlists: s.playlists.map((p) =>
-        p.id === playlistId ? { ...p, songIds: p.songIds.filter((id) => id !== songId) } : p
-      ),
-    })),
+      addSongToPlaylist: (playlistId, song) =>
+        set((s) => ({
+          playlists: s.playlists.map((p) =>
+            p.id === playlistId && !p.songs.some((sng) => sng.id === song.id)
+              ? { ...p, songs: [song, ...p.songs] }
+              : p
+          ),
+        })),
 
-  reorderPlaylist: (playlistId, songIds) =>
-    set((s) => ({
-      playlists: s.playlists.map((p) =>
-        p.id === playlistId ? { ...p, songIds } : p
-      ),
-    })),
-}));
+      removeSongFromPlaylist: (playlistId, songId) =>
+        set((s) => ({
+          playlists: s.playlists.map((p) =>
+            p.id === playlistId
+              ? { ...p, songs: p.songs.filter((sng) => sng.id !== songId) }
+              : p
+          ),
+        })),
+    }),
+    {
+      name: 'sursuno-playlists',
+    }
+  )
+);

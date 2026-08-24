@@ -11,7 +11,7 @@ import { NewsPage } from './pages/NewsPage';
 import { ArtistsPage } from './pages/ArtistsPage';
 import { LanguagePage } from './pages/LanguagePage';
 import { GenresPage } from './pages/GenresPage';
-import { LibraryPage } from './pages/LibraryPage';
+import { PlaylistsPage } from './pages/PlaylistsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { DownloadPage } from './pages/DownloadPage';
 import { useEffect } from 'react';
@@ -29,7 +29,7 @@ function RouterContent() {
       <Header />
       <div className="flex flex-1 max-w-screen-2xl mx-auto w-full">
         <Sidebar />
-        <main className="flex-1 px-4 md:px-6 pt-6 pb-[2rem] overflow-x-hidden">
+        <main className="flex-1 px-[1rem] md:px-[1.5rem] pt-[1.5rem] pb-[7rem] overflow-x-hidden">
           <Routes>
             <Route path="/" element={<HomePage onNavigate={navigate} />} />
             <Route path="/search" element={<SearchPage />} />
@@ -39,7 +39,7 @@ function RouterContent() {
             <Route path="/language/:lang" element={<LanguagePage />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/genres" element={<GenresPage />} />
-            <Route path="/library" element={<LibraryPage />} />
+            <Route path="/playlists" element={<PlaylistsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/download" element={<DownloadPage />} />
           </Routes>
