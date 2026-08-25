@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '@/services/supabaseClient';
-import { getUserArtistPreferences } from '@/services/preferencesApi';
+import { getUserArtistPreferences, toValidUuid } from '@/services/preferencesApi';
 import { useUserStore } from '@/stores/userStore';
 import type { Session, User } from '@supabase/supabase-js';
 
@@ -39,6 +39,7 @@ let authListenerSubscribed = false;
 async function syncUserOnboardingAndPreferences(userId: string, currentMetadataHasOnboarded?: boolean): Promise<boolean> {
   if (!userId) return false;
 
+  const validUuid = toValidUuid(userId);
   let hasOnboarded = Boolean(currentMetadataHasOnboarded);
 
   if (isSupabaseConfigured && supabase) {
@@ -47,7 +48,7 @@ async function syncUserOnboardingAndPreferences(userId: string, currentMetadataH
       const { data: profile } = await supabase
         .from('profiles')
         .select('has_onboarded')
-        .eq('id', userId)
+        .eq('id', validUuid)
         .maybeSingle();
 
       if (profile?.has_onboarded) {
@@ -58,7 +59,7 @@ async function syncUserOnboardingAndPreferences(userId: string, currentMetadataH
       const { data: prefs, error } = await supabase
         .from('user_artist_preferences')
         .select('artist_id, artist_name, artist_image')
-        .eq('user_id', userId);
+        .eq('user_id', validUuid);
 
       if (!error && prefs && prefs.length > 0) {
         hasOnboarded = true;
@@ -70,7 +71,7 @@ async function syncUserOnboardingAndPreferences(userId: string, currentMetadataH
         }));
         useUserStore.getState().setFavoriteArtists(loadedArtists);
       } else if (hasOnboarded) {
-        const loadedArtists = await getUserArtistPreferences(userId);
+        const loadedArtists = await getUserArtistPreferences(validUuid);
         if (loadedArtists && loadedArtists.length > 0) {
           useUserStore.getState().setFavoriteArtists(loadedArtists);
         }
@@ -81,7 +82,7 @@ async function syncUserOnboardingAndPreferences(userId: string, currentMetadataH
         try {
           await supabase
             .from('profiles')
-            .upsert({ id: userId, has_onboarded: true });
+            .upsert({ id: validUuid, has_onboarded: true });
         } catch {
           // Ignore sync error
         }
@@ -91,7 +92,7 @@ async function syncUserOnboardingAndPreferences(userId: string, currentMetadataH
     }
   } else {
     // Local / Offline fallback
-    const savedArtists = await getUserArtistPreferences(userId);
+    const savedArtists = await getUserArtistPreferences(validUuid);
     if (savedArtists && savedArtists.length > 0) {
       hasOnboarded = true;
       useUserStore.getState().setFavoriteArtists(savedArtists);
@@ -270,7 +271,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const mockUser = {
-            id: `user_${Date.now()}`,
+            id: toValidUuid(email),
             email,
             user_metadata: {
               full_name: fullName || 'Music Lover',
@@ -384,7 +385,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const mockUser = {
-            id: `user_${Date.now()}`,
+            id: toValidUuid(email),
             email,
             user_metadata: {
               full_name: 'Music Lover',
