@@ -78,10 +78,13 @@ async function syncUserOnboardingAndPreferences(userId: string, currentMetadataH
 
       // 3. Ensure profile has_onboarded status is kept in sync in DB
       if (hasOnboarded && (!profile || !profile.has_onboarded)) {
-        await supabase
-          .from('profiles')
-          .upsert({ id: userId, has_onboarded: true })
-          .catch(() => {});
+        try {
+          await supabase
+            .from('profiles')
+            .upsert({ id: userId, has_onboarded: true });
+        } catch {
+          // Ignore sync error
+        }
       }
     } catch (err) {
       console.error('Error syncing user onboarding and preferences from DB:', err);
