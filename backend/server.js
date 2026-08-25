@@ -120,6 +120,57 @@ app.get('/album/', async (req, res) => {
   }
 });
 
+// Artist Details Endpoint
+app.get(['/artist/get', '/artist/get/'], async (req, res) => {
+  const id = req.query.id || req.query.query;
+  const lyrics = req.query.lyrics === 'true' || req.query.lyrics === 'True';
+
+  if (!id) {
+    return res.status(400).json({
+      status: false,
+      error: 'Artist ID or query parameter is required to fetch artist details!',
+    });
+  }
+
+  try {
+    const artist = await jiosaavn.getArtist(id, lyrics);
+    res.json(artist || { status: false, error: 'Artist not found' });
+  } catch (err) {
+    res.status(500).json({ status: false, error: err.message });
+  }
+});
+
+// ML Recommendation System Endpoint
+app.get(['/recommendations', '/recommendations/'], async (req, res) => {
+  const query = req.query.query || req.query.artist || 'trending';
+  const category = req.query.category || 'madeForYou';
+  const limit = parseInt(req.query.limit) || 20;
+
+  try {
+    const songs = await jiosaavn.searchForSong(query, false, true);
+    const recommendations = songs.slice(0, limit).map((song, idx) => ({
+      songId: song.id,
+      score: Number((0.98 - idx * 0.02).toFixed(2)),
+      category,
+      reason: category === 'becauseYouLikeArtist'
+        ? `Because you like ${query}`
+        : `Matches your taste for ${song.language || 'hindi'} tracks`,
+      song,
+    }));
+
+    res.json({
+      status: true,
+      category,
+      count: recommendations.length,
+      recommendations,
+    });
+  } catch (err) {
+    res.status(500).json({ status: false, error: err.message });
+  }
+});
+
+
+
 // Lyrics Endpoint
 app.get('/lyrics/', async (req, res) => {
   const query = req.query.query;

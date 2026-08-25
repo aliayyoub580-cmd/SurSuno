@@ -14,9 +14,10 @@ interface SongCardProps {
   isFavorite?: boolean;
   isPlaying?: boolean;
   variant?: 'grid' | 'list';
+  reason?: string;
 }
 
-export function SongCard({ song, onPlay, onFavorite, isFavorite, isPlaying, variant = 'grid' }: SongCardProps) {
+export function SongCard({ song, onPlay, onFavorite, isFavorite, isPlaying, variant = 'grid', reason }: SongCardProps) {
   return (
     <motion.div
       layout
@@ -43,6 +44,11 @@ export function SongCard({ song, onPlay, onFavorite, isFavorite, isPlaying, vari
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               loading="lazy"
             />
+            {reason && (
+              <div className="absolute top-2 left-2 right-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[0.625rem] font-bold text-white truncate shadow-md border border-white/10">
+                ✨ {reason}
+              </div>
+            )}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -64,6 +70,7 @@ export function SongCard({ song, onPlay, onFavorite, isFavorite, isPlaying, vari
           </div>
         </>
       )}
+
 
       {variant === 'list' && (
         <>

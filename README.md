@@ -1,32 +1,51 @@
-# React + TypeScript + Vite
+# SurSuno
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+SurSuno is a music discovery and streaming-style web app that fetches music metadata and playback URLs from JioSaavn, then presents them in a polished React experience with playlists, recommendations, news, and PWA support.
 
-Currently, two official plugins are available:
+## Project Summary
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Frontend: React + TypeScript + Vite
+- Backend: Node.js + Express
+- Data source: JioSaavn public API / scraping endpoints
+- Content extension: RSS news feed + optional Supabase integration
+- Extras: PWA install flow, local playlist persistence, recommendation engine
 
-## React Compiler
+## Documentation
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The complete project documentation has been organized into the following markdown files:
 
-## Expanding the Oxlint configuration
+- [docs/README.md](docs/README.md) — documentation index
+- [docs/architecture.md](docs/architecture.md) — system architecture and design flow
+- [docs/api.md](docs/api.md) — frontend and backend API reference
+- [docs/development.md](docs/development.md) — setup, scripts, and developer workflow
+- [docs/deployment.md](docs/deployment.md) — deployment and environment configuration
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Main Application Areas
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+- [src/App.tsx](src/App.tsx) — app router and shell layout
+- [src/pages](src/pages) — screens for home, search, discovery, trending, news, profiles, and playlists
+- [src/components](src/components) — reusable UI and player components
+- [src/services](src/services) — API client logic and recommendation/news integrations
+- [src/stores](src/stores) — Zustand state for player, playlists, and user preferences
+- [backend/server.js](backend/server.js) — Express API server
+- [backend/jiosaavn.js](backend/jiosaavn.js) — JioSaavn integration logic
+- [supabase_schema.sql](supabase_schema.sql) — optional database schema for Supabase
+
+## Typical Local Setup
+
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+For the backend:
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+## Notes
+
+This project depends on external service data and therefore includes fallback handling for upstream API or feed changes. The docs in the [docs](docs) folder contain the full technical reference and operational guidance.

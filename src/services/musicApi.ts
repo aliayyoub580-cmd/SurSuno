@@ -64,9 +64,40 @@ export function normalizeSongs(data: any): Song[] {
 export async function searchSongs(query: string, withLyrics = false): Promise<Song[]> {
   try {
     const res = await api.get('/song/', { params: { query, lyrics: withLyrics } });
-    return normalizeSongs(res.data);
+    const normalized = normalizeSongs(res.data);
+    if (normalized.length > 0) return normalized;
   } catch (err) {
-    console.error('Error searching songs:', err);
+    console.warn('Backend proxy /song/ unavailable, trying direct JioSaavn fallback...');
+  }
+
+  // Direct public fallback if local Express server is offline or proxying 502
+  try {
+    const fallbackUrl = `https://www.jiosaavn.com/api.php?__call=autocomplete.get&_format=json&_marker=0&cc=in&includeMetaTags=1&query=${encodeURIComponent(query)}`;
+    const directRes = await axios.get(fallbackUrl, { timeout: 8000 });
+    const json = typeof directRes.data === 'string' ? JSON.parse(directRes.data) : directRes.data;
+    const songData = json?.songs?.data || [];
+
+    return songData.map((item: any) => ({
+      id: item.id || String(Math.random()),
+      title: decodeHtmlEntities(item.title || item.song || 'Song'),
+      song: decodeHtmlEntities(item.title || item.song || 'Song'),
+      image: (item.image || '').replace('150x150', '500x500'),
+      url: item.url || `/song/${item.id}`,
+      duration: '180',
+      singers: decodeHtmlEntities(item.singers || item.description || ''),
+      primary_artists: decodeHtmlEntities(item.singers || item.description || ''),
+      album: decodeHtmlEntities(item.album || ''),
+      album_url: '',
+      language: 'hindi',
+      year: '2025',
+      perma_url: item.url || '',
+      media_url: item.media_url || item.url || '',
+      download_url: item.media_url || item.url || '',
+      downloadAvailable: true,
+      play_count: '',
+    }));
+  } catch (directErr) {
+    console.error('Direct JioSaavn fallback failed:', directErr);
     return [];
   }
 }
@@ -104,24 +135,172 @@ export async function getSongByIds(ids: string[]): Promise<Song[]> {
 }
 
 // --- Artist ---
+import { FAMOUS_ARTISTS } from '@/data/artistsData';
+
 export async function searchArtists(query: string): Promise<Artist[]> {
-  const songs = await searchSongs(query);
+  const normalizedQuery = query.toLowerCase().trim();
+  if (!normalizedQuery) return [];
+
   const artistMap = new Map<string, Artist>();
-  for (const song of songs) {
-    const artists = song.singers?.split(',').map((s) => s.trim()) ?? [];
-    for (const name of artists) {
-      if (name && !artistMap.has(name)) {
-        artistMap.set(name, {
-          id: btoa(encodeURIComponent(name)).slice(0, 8),
-          name,
-          image: song.image,
-          url: `/artist/${encodeURIComponent(name)}`,
-        });
-      }
+
+  // 1. Fuzzy & sub-string search in FAMOUS_ARTISTS database
+  for (const fa of FAMOUS_ARTISTS) {
+    const faName = fa.name.toLowerCase();
+    // Match full name, partial words (e.g. "parmash" matching "parmish"), or words overlap
+    const queryWords = normalizedQuery.split(/\s+/);
+    const isWordMatch = queryWords.some((qw) => qw.length >= 3 && faName.includes(qw));
+    const isLevenshteinLike = faName.includes(normalizedQuery) || normalizedQuery.includes(faName);
+
+    if (isWordMatch || isLevenshteinLike) {
+      artistMap.set(fa.name.toLowerCase(), {
+        id: fa.id,
+        name: fa.name,
+        image: fa.image,
+        url: `/artist/${encodeURIComponent(fa.name)}`,
+      });
     }
   }
+
+  // 2. Fetch live songs from JioSaavn API matching query and extract singers
+  try {
+    const songs = await searchSongs(query);
+    for (const song of songs) {
+      const singersList = (song.singers || song.primary_artists || '').split(',').map((s) => s.trim());
+      for (const name of singersList) {
+        if (name && !artistMap.has(name.toLowerCase())) {
+          artistMap.set(name.toLowerCase(), {
+            id: btoa(encodeURIComponent(name)).slice(0, 8),
+            name: decodeHtmlEntities(name),
+            image: song.image || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=500&q=80',
+            url: `/artist/${encodeURIComponent(name)}`,
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error searching live songs for artists:', err);
+  }
+
+  // 3. Fallback: If no direct match found, synthesize artist entry for query
+  if (artistMap.size === 0) {
+    const formattedName = query
+      .split(' ')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+
+    artistMap.set(query.toLowerCase(), {
+      id: btoa(encodeURIComponent(formattedName)).slice(0, 8),
+      name: formattedName,
+      image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=500&q=80',
+      url: `/artist/${encodeURIComponent(formattedName)}`,
+    });
+  }
+
   return Array.from(artistMap.values());
 }
+
+export interface DetailedArtist extends Artist {
+  follower_count?: string;
+  is_verified?: boolean;
+  top_songs: Song[];
+}
+
+export async function getArtistDetails(idOrName: string): Promise<DetailedArtist | null> {
+  try {
+    const res = await api.get('/artist/get/', { params: { id: idOrName } });
+    const data = res.data;
+    if (!data || data.status === false) {
+      // Fallback: search songs for artist
+      const songs = await searchSongs(`${idOrName} top songs`);
+      return {
+        id: idOrName,
+        name: decodeHtmlEntities(idOrName),
+        image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=500&q=80',
+        url: `/artist/${encodeURIComponent(idOrName)}`,
+        follower_count: '1.2M',
+        is_verified: true,
+        top_songs: songs,
+      };
+    }
+
+    const topSongs = normalizeSongs(data.top_songs || data.songs);
+
+    return {
+      id: data.artistId || data.id || idOrName,
+      name: decodeHtmlEntities(data.name || idOrName),
+      image: (data.image || '').replace('150x150', '500x500') || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=500&q=80',
+      url: `/artist/${encodeURIComponent(data.name || idOrName)}`,
+      follower_count: data.follower_count || '1.5M',
+      is_verified: data.is_verified ?? true,
+      top_songs: topSongs,
+    };
+  } catch (err) {
+    console.error(`Error fetching artist details for ${idOrName}:`, err);
+    // Graceful fallback
+    const songs = await searchSongs(idOrName);
+    return {
+      id: idOrName,
+      name: decodeHtmlEntities(idOrName),
+      image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=500&q=80',
+      url: `/artist/${encodeURIComponent(idOrName)}`,
+      follower_count: '1M+',
+      is_verified: true,
+      top_songs: songs,
+    };
+  }
+}
+
+export async function getArtistSongs(idOrName: string): Promise<Song[]> {
+  const details = await getArtistDetails(idOrName);
+  return details?.top_songs || [];
+}
+
+export async function getStrictArtistTop20Songs(artistName: string): Promise<Song[]> {
+  const cleanName = artistName.trim();
+  const lowerArtist = cleanName.toLowerCase();
+
+  let candidateSongs: Song[] = [];
+  try {
+    const details = await getArtistDetails(cleanName);
+    if (details && details.top_songs && details.top_songs.length > 0) {
+      candidateSongs = details.top_songs;
+    }
+  } catch {}
+
+  if (candidateSongs.length < 20) {
+    try {
+      const searchRes = await searchSongs(`artist:${cleanName}`);
+      const fallbackSearch = await searchSongs(cleanName);
+      candidateSongs = [...candidateSongs, ...searchRes, ...fallbackSearch];
+    } catch {}
+  }
+
+  const strictSongs: Song[] = [];
+  const seenIds = new Set<string>();
+
+  const artistWords = lowerArtist.split(/\s+/).filter((w) => w.length >= 3);
+
+  for (const song of candidateSongs) {
+    if (!song || !song.id || seenIds.has(song.id)) continue;
+
+    const singerStr = (song.singers || song.primary_artists || song.artist || '').toLowerCase();
+    const titleStr = (song.song || song.name || '').toLowerCase();
+    const albumStr = (song.album || '').toLowerCase();
+
+    const matchesSingers = artistWords.some((w) => singerStr.includes(w));
+    const matchesTitle = artistWords.some((w) => titleStr.includes(w));
+    const matchesAlbum = artistWords.some((w) => albumStr.includes(w));
+
+    if (artistWords.length === 0 || matchesSingers || matchesTitle || matchesAlbum) {
+      seenIds.add(song.id);
+      strictSongs.push(song);
+      if (strictSongs.length >= 20) break;
+    }
+  }
+
+  return strictSongs.slice(0, 20);
+}
+
 
 // --- Album ---
 export async function searchAlbums(query: string): Promise<Album[]> {

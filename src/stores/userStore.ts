@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Song } from '@/types';
+import type { Song, Artist } from '@/types';
+import type { UserMusicProfile } from '@/services/recommendationEngine/types';
+import { createDefaultProfile } from '@/services/recommendationEngine/profileEngine';
 
 export interface UserPreferences {
   languages: Record<string, number>;
@@ -11,11 +13,17 @@ export interface UserPreferences {
 interface UserState {
   favorites: string[];
   favoriteSongs: Song[];
+  favoriteArtists: Artist[];
   recentlyPlayed: Song[];
   searchHistory: string[];
   userPreferences: UserPreferences;
+  userMusicProfile: UserMusicProfile;
   skippedTrackIds: string[];
 
+  setUserMusicProfile: (profile: UserMusicProfile) => void;
+  setFavoriteArtists: (artists: Artist[]) => void;
+  addFavoriteArtist: (artist: Artist) => void;
+  removeFavoriteArtist: (artistId: string) => void;
   toggleFavorite: (song: Song) => void;
   addFavorite: (song: Song | string) => void;
   removeFavorite: (songId: string) => void;
@@ -33,6 +41,7 @@ export const useUserStore = create<UserState>()(
     (set, get) => ({
       favorites: [],
       favoriteSongs: [],
+      favoriteArtists: [],
       recentlyPlayed: [],
       searchHistory: [],
       userPreferences: {
@@ -40,7 +49,27 @@ export const useUserStore = create<UserState>()(
         artists: {},
         genres: {},
       },
+      userMusicProfile: createDefaultProfile('local_user'),
       skippedTrackIds: [],
+
+      setUserMusicProfile: (profile) => set({ userMusicProfile: profile }),
+
+
+      setFavoriteArtists: (artists) => set({ favoriteArtists: artists }),
+
+      addFavoriteArtist: (artist) =>
+        set((s) => {
+          if (s.favoriteArtists.some((a) => a.id === artist.id || a.name === artist.name)) {
+            return s;
+          }
+          return { favoriteArtists: [...s.favoriteArtists, artist] };
+        }),
+
+      removeFavoriteArtist: (artistId) =>
+        set((s) => ({
+          favoriteArtists: s.favoriteArtists.filter((a) => a.id !== artistId && a.name !== artistId),
+        })),
+
 
       toggleFavorite: (song) => {
         const { favorites, favoriteSongs } = get();

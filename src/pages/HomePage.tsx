@@ -10,8 +10,9 @@ import type { Song } from '@/types';
 
 export function HomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const { songs: trendingSongs, loading: trendingLoading } = useTrending();
+  const { songs: personalizedSongs, loading: personalizedLoading } = usePersonalized();
   const { currentTrack } = usePlayerStore();
-  const { recentlyPlayed } = useUserStore();
+  const { recentlyPlayed, favoriteArtists } = useUserStore();
   const recommended = useRecommended(currentTrack);
 
   const handlePlayAll = (list: Song[]) => {
@@ -19,9 +20,26 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
     setQueue(list, 0, 'recommendation');
   };
 
+  const favoriteArtistNames = favoriteArtists.map((a) => a.name).join(', ');
+
   return (
     <div className="space-y-10">
       <Hero onSearch={(q) => onNavigate(`/search?q=${encodeURIComponent(q)}`)} />
+
+      {/* Made For You - Based on Favorite Artists */}
+      {personalizedSongs.length > 0 && (
+        <SongList
+          songs={personalizedSongs.slice(0, 12)}
+          title="Made For You"
+          subtitle={
+            favoriteArtistNames
+              ? `Tailored to your favorite artists: ${favoriteArtistNames}`
+              : 'Based on your personal taste'
+          }
+          onPlayAll={handlePlayAll}
+          loading={personalizedLoading}
+        />
+      )}
 
       {/* Trending Now (2 complete rows = 12 songs) */}
       <SongList
@@ -75,6 +93,17 @@ export function HomePage({ onNavigate }: { onNavigate: (path: string) => void })
           onPlayAll={handlePlayAll}
         />
       )}
+
+      {/* Discover Something New (20% Exploration Rail) */}
+      {personalizedSongs.length > 6 && (
+        <SongList
+          songs={personalizedSongs.slice(6, 12)}
+          title="Discover Something New"
+          subtitle="Exploration pick: Fresh tracks and new artists matched to your music vibe"
+          onPlayAll={handlePlayAll}
+        />
+      )}
     </div>
   );
 }
+

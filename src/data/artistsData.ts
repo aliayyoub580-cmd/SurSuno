@@ -357,4 +357,32 @@ export const FAMOUS_ARTISTS: ArtistItem[] = [
     genre: 'Pioneer Desi Hip-Hop',
     followers: '9.4M',
   },
+  {
+    id: 'parmish-verma',
+    name: 'Parmish Verma',
+    image: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=500&q=80',
+    genre: 'Punjabi Pop / Beats',
+    followers: '12.4M',
+  },
+  {
+    id: 'garry-sandhu',
+    name: 'Garry Sandhu',
+    image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=500&q=80',
+    genre: 'Punjabi Urban',
+    followers: '10.1M',
+  },
+  {
+    id: 'harrdy-sandhu',
+    name: 'Harrdy Sandhu',
+    image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=500&q=80',
+    genre: 'Punjabi Romantic Pop',
+    followers: '15.8M',
+  },
+  {
+    id: 'jasmine-sandlas',
+    name: 'Jasmine Sandlas',
+    image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=500&q=80',
+    genre: 'Punjabi Folk Pop',
+    followers: '7.6M',
+  },
 ];

@@ -55,8 +55,26 @@ export function BottomNav() {
   );
 }
 
+import { useAuthStore } from '@/stores/useAuthStore';
+
+function getUserDisplayName(user: any): string {
+  const metaName = user?.user_metadata?.full_name;
+  if (metaName && metaName !== 'Music Lover' && metaName !== 'Sur User') {
+    return metaName;
+  }
+  if (user?.email) {
+    const parts = user.email.split('@')[0].split(/[._-]/);
+    return parts
+      .map((p: string) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+      .join(' ');
+  }
+  return 'Music Enthusiast';
+}
+
 export function Sidebar() {
   const location = useLocation();
+  const { user } = useAuthStore();
+  const displayName = getUserDisplayName(user);
 
   return (
     <aside className="hidden md:flex flex-col w-56 flex-shrink-0 bg-surface border-r border-border h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto" aria-label="Sidebar navigation">
@@ -82,15 +100,15 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto p-4 border-t border-border">
-        <div className="flex items-center gap-3 px-3 py-2">
+        <Link to="/profile" className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-surface-2 transition-colors group cursor-pointer">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-pink-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-            S
+            {displayName.slice(0, 1).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-text truncate">Sur User</p>
-            <p className="text-xs text-text-muted">Free Plan</p>
+            <p className="text-sm font-medium text-text group-hover:text-accent truncate">{displayName}</p>
+            <p className="text-xs text-text-muted">Pro Listener</p>
           </div>
-        </div>
+        </Link>
       </div>
     </aside>
   );

@@ -167,7 +167,7 @@ export function AddToPlaylistModal({ isOpen, onClose, song }: AddToPlaylistModal
                 <button
                   onClick={handleCreateAndAdd}
                   disabled={!newPlaylistName.trim()}
-                  className="px-5 py-2 rounded-full text-xs font-bold bg-accent text-white shadow-md disabled:opacity-50 hover:bg-accent/90 transition-all"
+                  className="px-5 py-2 rounded-full text-xs font-extrabold bg-[#7c3aed] text-white shadow-md disabled:opacity-50 hover:bg-[#6d28d9] transition-all"
                 >
                   Create & Add
                 </button>

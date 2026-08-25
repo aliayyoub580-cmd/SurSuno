@@ -56,13 +56,19 @@ export function useRecommended(track: Song | null) {
   return { songs, loading };
 }
 
+import { useUserStore } from '@/stores/userStore';
+
 export function usePersonalized() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
+  const favoriteArtists = useUserStore((state) => state.favoriteArtists);
+
   useEffect(() => {
+    setLoading(true);
     getPersonalizedRecommendations()
       .then(setSongs)
       .finally(() => setLoading(false));
-  }, []);
+  }, [favoriteArtists.length, favoriteArtists.map((a) => a.name).join(',')]);
+
   return { songs, loading };
 }

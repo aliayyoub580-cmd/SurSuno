@@ -1,13 +1,37 @@
 import { motion } from 'motion/react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useUserStore } from '@/stores/userStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { usePlayerStore } from '@/stores/playerStore';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
-import type { Song } from '@/types';
+
+function getUserDisplayName(user: any): string {
+  const metaName = user?.user_metadata?.full_name;
+  if (metaName && metaName !== 'Music Lover' && metaName !== 'Sur User') {
+    return metaName;
+  }
+  if (user?.email) {
+    const parts = user.email.split('@')[0].split(/[._-]/);
+    return parts
+      .map((p: string) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+      .join(' ');
+  }
+  return 'Music Enthusiast';
+}
 
 export function ProfilePage() {
-  const { favorites, recentlyPlayed, searchHistory } = useUserStore();
-  const { currentTrack } = usePlayerStore();
+  const { favorites, favoriteArtists, recentlyPlayed } = useUserStore();
+  const { user, signOut } = useAuthStore();
   const { isInstalled, isInstallable, isIOS, promptInstall } = usePWAInstall();
+  const navigate = useNavigate();
+
+  const displayName = getUserDisplayName(user);
+  const topArtists = favoriteArtists.map((a) => a.name);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
 
   // Estimate language preferences from recently played
   const langCounts: Record<string, number> = {};
@@ -21,38 +45,90 @@ export function ProfilePage() {
     .sort((a, b) => b.pct - a.pct)
     .slice(0, 5);
 
-  // Top artists
-  const artistCounts: Record<string, number> = {};
-  recentlyPlayed.forEach((song) => {
-    song.singers?.split(',').forEach((a) => {
-      artistCounts[a.trim()] = (artistCounts[a.trim()] || 0) + 1;
-    });
-  });
-  const topArtists = Object.entries(artistCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([name]) => name);
-
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-accent to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
-            S
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-accent to-pink-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+              {displayName.slice(0, 1).toUpperCase()}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-text">
+                {displayName}
+              </h1>
+              <p className="text-text-muted text-xs sm:text-sm">{user?.email || 'Music Enthusiast'}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-text">Sur User</h1>
-            <p className="text-text-muted">Music Lover</p>
-          </div>
+
+          <button
+            onClick={handleSignOut}
+            className="self-start sm:self-auto px-4 py-2 rounded-full border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold text-xs transition-colors flex items-center gap-2"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Sign Out
+          </button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-8">
           <StatCard label="Favorites" value={favorites.length} icon="❤️" />
           <StatCard label="Played" value={recentlyPlayed.length} icon="🎵" />
-          <StatCard label="Searches" value={searchHistory.length} icon="🔍" />
+          <StatCard label="Artists" value={favoriteArtists.length} icon="🎤" />
         </div>
       </motion.div>
+
+      {/* Favorite Artists / Preferences Section */}
+      <section className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-bold text-text">Your Favorite Artists</h2>
+            <p className="text-xs text-text-muted">Drives your personalized "Made For You" feed</p>
+          </div>
+          <button
+            onClick={() => navigate('/onboarding/artists?edit=true')}
+            className="px-4 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent font-bold text-xs transition-colors flex items-center gap-1.5"
+          >
+            <span>✏️ Edit Artists</span>
+          </button>
+        </div>
+
+        {favoriteArtists.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {favoriteArtists.map((artist) => (
+              <Link
+                key={artist.id || artist.name}
+                to={`/artist/${encodeURIComponent(artist.name)}`}
+                className="flex items-center gap-3 p-3 rounded-2xl bg-surface border border-border hover:border-accent/40 transition-all group"
+              >
+                <img
+                  src={artist.image || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=200&q=80'}
+                  alt={artist.name}
+                  className="w-10 h-10 rounded-full object-cover shrink-0"
+                />
+                <span className="text-xs font-bold text-text group-hover:text-accent truncate">
+                  {artist.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="p-6 rounded-2xl bg-surface border border-border text-center space-y-2">
+            <p className="text-xs text-text-muted">No favorite artists selected yet.</p>
+            <button
+              onClick={() => navigate('/onboarding/artists?edit=true')}
+              className="px-4 py-2 rounded-full bg-accent text-white font-bold text-xs hover:bg-accent/90 transition-colors"
+            >
+              Pick Your Artists
+            </button>
+          </div>
+        )}
+      </section>
+
 
       {/* App Settings / PWA Installation */}
       <section className="mb-8">

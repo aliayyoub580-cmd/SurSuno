@@ -13,7 +13,7 @@ export interface Playlist {
 
 interface LibraryState {
   playlists: Playlist[];
-  createPlaylist: (name: string, description?: string, coverImage?: string) => Playlist;
+  createPlaylist: (name: string, description?: string, coverImage?: string, initialSongs?: Song[]) => Playlist;
   deletePlaylist: (id: string) => void;
   renamePlaylist: (id: string, name: string) => void;
   addSongToPlaylist: (playlistId: string, song: Song) => void;
@@ -25,13 +25,13 @@ export const useLibraryStore = create<LibraryState>()(
     (set, get) => ({
       playlists: [],
 
-      createPlaylist: (name, description = '', coverImage = '') => {
+      createPlaylist: (name, description = '', coverImage = '', initialSongs: Song[] = []) => {
         const newPl: Playlist = {
           id: `pl_${Date.now()}`,
           name: name.trim(),
           description: description.trim(),
-          coverImage,
-          songs: [],
+          coverImage: coverImage || (initialSongs[0]?.image || ''),
+          songs: initialSongs,
           createdAt: Date.now(),
         };
         set((s) => ({ playlists: [newPl, ...s.playlists] }));

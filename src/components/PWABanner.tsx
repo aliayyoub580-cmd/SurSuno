@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { CloseIcon } from './Icons';
 
 export function PWABanner() {
-  const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
+  const pwa = usePWAInstall();
+  const { isInstallable, isInstalled, promptInstall } = pwa || {};
   const [dismissed, setDismissed] = useState<boolean>(true);
 
   useEffect(() => {
