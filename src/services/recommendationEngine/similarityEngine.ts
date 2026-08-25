@@ -138,7 +138,7 @@ export function calculateSongToSongSimilarity(target: SongFeatures, candidate: S
 
   // Categorical similarity (Genre & Mood overlap)
   const sharedGenres = target.genres.filter((g) => candidate.genres.includes(g)).length;
-  const genreSim = sharedGenres / Math.max(1, Math.union ? target.genres.length : 2);
+  const genreSim = sharedGenres / Math.max(1, target.genres.length);
 
   const sharedMoods = target.moods.filter((m) => candidate.moods.includes(m)).length;
   const moodSim = sharedMoods / Math.max(1, target.moods.length);

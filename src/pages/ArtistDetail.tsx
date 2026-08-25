@@ -82,7 +82,7 @@ export function ArtistDetail() {
 
   const handlePlayArtist = (startIndex = 0) => {
     if (!artist.top_songs || artist.top_songs.length === 0) return;
-    setQueue(artist.top_songs, startIndex, `artist-${artist.name}`);
+    setQueue(artist.top_songs, startIndex, 'artist');
     setTrack(artist.top_songs[startIndex]);
     usePlayerStore.setState({ isPlaying: true });
   };
@@ -90,7 +90,7 @@ export function ArtistDetail() {
   const handleShufflePlay = () => {
     if (!artist.top_songs || artist.top_songs.length === 0) return;
     const shuffled = [...artist.top_songs].sort(() => Math.random() - 0.5);
-    setQueue(shuffled, 0, `artist-${artist.name}-shuffle`);
+    setQueue(shuffled, 0, 'artist');
     setTrack(shuffled[0]);
     usePlayerStore.setState({ isPlaying: true });
   };
@@ -298,7 +298,7 @@ export function ArtistDetail() {
                           >
                             <button
                               onClick={() => {
-                                usePlayerStore.getState().addToQueue(song);
+                                usePlayerStore.getState().extendQueue([song]);
                                 setActiveMenuSongId(null);
                               }}
                               className="w-full px-4 py-2 text-left text-xs font-semibold text-text hover:bg-surface-3 flex items-center gap-2"

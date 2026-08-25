@@ -127,7 +127,7 @@ export const useAuthStore = create<AuthState>()(
             if (!authListenerSubscribed) {
               authListenerSubscribed = true;
               supabase.auth.onAuthStateChange(async (_event, session) => {
-                if (session?.user) {
+                if (session?.user && supabase) {
                   const { data: profile } = await supabase
                     .from('profiles')
                     .select('has_onboarded')
@@ -260,8 +260,7 @@ export const useAuthStore = create<AuthState>()(
                 .upsert({
                   id: data.user.id,
                   has_onboarded: false,
-                })
-                .catch(() => {});
+                });
 
               const activeSession = data.session || mockSession;
               const activeUser = data.user || mockUser;

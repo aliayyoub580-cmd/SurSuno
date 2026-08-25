@@ -283,8 +283,8 @@ export async function getStrictArtistTop20Songs(artistName: string): Promise<Son
   for (const song of candidateSongs) {
     if (!song || !song.id || seenIds.has(song.id)) continue;
 
-    const singerStr = (song.singers || song.primary_artists || song.artist || '').toLowerCase();
-    const titleStr = (song.song || song.name || '').toLowerCase();
+    const singerStr = (song.singers || song.primary_artists || (song as any).artist || '').toLowerCase();
+    const titleStr = (song.song || (song as any).name || '').toLowerCase();
     const albumStr = (song.album || '').toLowerCase();
 
     const matchesSingers = artistWords.some((w) => singerStr.includes(w));
