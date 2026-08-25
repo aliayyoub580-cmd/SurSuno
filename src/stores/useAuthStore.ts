@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '@/services/supabaseClient';
+import { getUserArtistPreferences } from '@/services/preferencesApi';
+import { useUserStore } from '@/stores/userStore';
 import type { Session, User } from '@supabase/supabase-js';
 
 const LOCAL_STORAGE_AUTH_KEY = 'sursuno-local-auth-session';
@@ -24,15 +26,77 @@ interface AuthState {
   isInitialized: boolean;
   hasOnboarded: boolean;
 
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null; hasOnboarded?: boolean }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null; hasOnboarded?: boolean }>;
   signOut: () => Promise<void>;
   restoreSession: () => Promise<void>;
   setHasOnboarded: (status: boolean) => Promise<void>;
-  signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null; hasOnboarded?: boolean }>;
 }
 
 let authListenerSubscribed = false;
+
+async function syncUserOnboardingAndPreferences(userId: string, currentMetadataHasOnboarded?: boolean): Promise<boolean> {
+  if (!userId) return false;
+
+  let hasOnboarded = Boolean(currentMetadataHasOnboarded);
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      // 1. Check profile table in database
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('has_onboarded')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profile?.has_onboarded) {
+        hasOnboarded = true;
+      }
+
+      // 2. Check user_artist_preferences table directly
+      const { data: prefs, error } = await supabase
+        .from('user_artist_preferences')
+        .select('artist_id, artist_name, artist_image')
+        .eq('user_id', userId);
+
+      if (!error && prefs && prefs.length > 0) {
+        hasOnboarded = true;
+        const loadedArtists = prefs.map((item) => ({
+          id: item.artist_id,
+          name: item.artist_name,
+          image: item.artist_image || '',
+          url: `/artist/${encodeURIComponent(item.artist_name)}`,
+        }));
+        useUserStore.getState().setFavoriteArtists(loadedArtists);
+      } else if (hasOnboarded) {
+        const loadedArtists = await getUserArtistPreferences(userId);
+        if (loadedArtists && loadedArtists.length > 0) {
+          useUserStore.getState().setFavoriteArtists(loadedArtists);
+        }
+      }
+
+      // 3. Ensure profile has_onboarded status is kept in sync in DB
+      if (hasOnboarded && (!profile || !profile.has_onboarded)) {
+        await supabase
+          .from('profiles')
+          .upsert({ id: userId, has_onboarded: true })
+          .catch(() => {});
+      }
+    } catch (err) {
+      console.error('Error syncing user onboarding and preferences from DB:', err);
+    }
+  } else {
+    // Local / Offline fallback
+    const savedArtists = await getUserArtistPreferences(userId);
+    if (savedArtists && savedArtists.length > 0) {
+      hasOnboarded = true;
+      useUserStore.getState().setFavoriteArtists(savedArtists);
+    }
+  }
+
+  return hasOnboarded;
+}
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -80,14 +144,9 @@ export const useAuthStore = create<AuthState>()(
           if (isSupabaseConfigured && supabase) {
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user) {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('has_onboarded')
-                .eq('id', session.user.id)
-                .single();
-
-              const hasOnboarded = Boolean(
-                profile?.has_onboarded ?? session.user.user_metadata?.has_onboarded ?? false
+              const hasOnboarded = await syncUserOnboardingAndPreferences(
+                session.user.id,
+                session.user.user_metadata?.has_onboarded
               );
 
               // Persist local mirror
@@ -113,10 +172,14 @@ export const useAuthStore = create<AuthState>()(
               });
             } else if (localParsed?.user) {
               // Restore local session if Supabase cloud session is null
+              const hasOnboarded = await syncUserOnboardingAndPreferences(
+                localParsed.user.id,
+                localParsed.user.user_metadata?.has_onboarded
+              );
               set({
                 session: localParsed,
                 user: localParsed.user,
-                hasOnboarded: Boolean(localParsed.user.user_metadata?.has_onboarded),
+                hasOnboarded,
                 isLoading: false,
                 isInitialized: true,
               });
@@ -128,14 +191,9 @@ export const useAuthStore = create<AuthState>()(
               authListenerSubscribed = true;
               supabase.auth.onAuthStateChange(async (_event, session) => {
                 if (session?.user && supabase) {
-                  const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('has_onboarded')
-                    .eq('id', session.user.id)
-                    .single();
-
-                  const hasOnboarded = Boolean(
-                    profile?.has_onboarded ?? session.user.user_metadata?.has_onboarded ?? false
+                  const hasOnboarded = await syncUserOnboardingAndPreferences(
+                    session.user.id,
+                    session.user.user_metadata?.has_onboarded
                   );
 
                   const localMirror: LocalSession = {
@@ -159,10 +217,14 @@ export const useAuthStore = create<AuthState>()(
                     try {
                       const parsed: LocalSession = JSON.parse(checkLocal);
                       if (parsed?.user) {
+                        const hasOnboarded = await syncUserOnboardingAndPreferences(
+                          parsed.user.id,
+                          parsed.user.user_metadata?.has_onboarded
+                        );
                         set({
                           session: parsed,
                           user: parsed.user,
-                          hasOnboarded: Boolean(parsed.user.user_metadata?.has_onboarded),
+                          hasOnboarded,
                           isLoading: false,
                           isInitialized: true,
                         });
@@ -352,31 +414,38 @@ export const useAuthStore = create<AuthState>()(
                 } catch {}
               }
 
+              const hasOnboarded = await syncUserOnboardingAndPreferences(
+                userObj.id,
+                userObj.user_metadata?.has_onboarded
+              );
+
               const fallbackSession: LocalSession = {
-                user: userObj,
+                user: {
+                  ...userObj,
+                  user_metadata: {
+                    ...userObj.user_metadata,
+                    has_onboarded: hasOnboarded,
+                  },
+                },
                 access_token: `local_token_${Date.now()}`,
               };
 
               localStorage.setItem(LOCAL_STORAGE_AUTH_KEY, JSON.stringify(fallbackSession));
               set({
                 session: fallbackSession,
-                user: userObj,
-                hasOnboarded: Boolean(userObj.user_metadata?.has_onboarded),
+                user: fallbackSession.user,
+                hasOnboarded,
                 isLoading: false,
                 isInitialized: true,
               });
-              return { error: null };
+              return { error: null, hasOnboarded };
             }
 
+            let hasOnboarded = false;
             if (data.user) {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('has_onboarded')
-                .eq('id', data.user.id)
-                .single();
-
-              const hasOnboarded = Boolean(
-                profile?.has_onboarded ?? data.user.user_metadata?.has_onboarded ?? false
+              hasOnboarded = await syncUserOnboardingAndPreferences(
+                data.user.id,
+                data.user.user_metadata?.has_onboarded
               );
 
               localStorage.setItem(
@@ -402,7 +471,7 @@ export const useAuthStore = create<AuthState>()(
                 isInitialized: true,
               });
             }
-            return { error: null };
+            return { error: null, hasOnboarded };
           } else {
             const stored = localStorage.getItem(LOCAL_STORAGE_AUTH_KEY);
             let userObj = mockUser;
@@ -412,19 +481,31 @@ export const useAuthStore = create<AuthState>()(
                 userObj.email = email;
               } catch {}
             }
+
+            const hasOnboarded = await syncUserOnboardingAndPreferences(
+              userObj.id,
+              userObj.user_metadata?.has_onboarded
+            );
+
             const activeSession: LocalSession = {
-              user: userObj,
+              user: {
+                ...userObj,
+                user_metadata: {
+                  ...userObj.user_metadata,
+                  has_onboarded: hasOnboarded,
+                },
+              },
               access_token: `mock_token_${Date.now()}`,
             };
             localStorage.setItem(LOCAL_STORAGE_AUTH_KEY, JSON.stringify(activeSession));
             set({
               session: activeSession,
-              user: userObj,
-              hasOnboarded: Boolean(userObj.user_metadata?.has_onboarded),
+              user: activeSession.user,
+              hasOnboarded,
               isLoading: false,
               isInitialized: true,
             });
-            return { error: null };
+            return { error: null, hasOnboarded };
           }
         } catch (err: any) {
           set({ isLoading: false });
@@ -458,6 +539,7 @@ export const useAuthStore = create<AuthState>()(
           }
         } finally {
           localStorage.removeItem(LOCAL_STORAGE_AUTH_KEY);
+          useUserStore.getState().setFavoriteArtists([]);
           set({
             session: null,
             user: null,

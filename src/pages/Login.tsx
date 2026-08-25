@@ -11,7 +11,7 @@ export function Login() {
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { signIn, signInWithGoogle, hasOnboarded } = useAuthStore();
+  const { signIn, signInWithGoogle } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -24,14 +24,15 @@ export function Login() {
     setErrorMsg('');
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    const { error, hasOnboarded: loginHasOnboarded } = await signIn(email, password);
     setLoading(false);
 
     if (error) {
       setErrorMsg(error.message || 'Failed to sign in. Please check your credentials.');
     } else {
-      // Check onboarding state
-      const target = hasOnboarded ? (location.state?.from?.pathname || '/') : '/onboarding/artists';
+      // Check fresh onboarding state
+      const isUserOnboarded = loginHasOnboarded ?? useAuthStore.getState().hasOnboarded;
+      const target = isUserOnboarded ? (location.state?.from?.pathname || '/') : '/onboarding/artists';
       navigate(target, { replace: true });
     }
   };
